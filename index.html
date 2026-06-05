@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="id">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Data ICD-10</title>
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"
+        />
+        <style>
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                font-family: sans-serif;
+                background: #e8edf2;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                padding: 1.5rem 1rem;
+            }
+
+            /* ── SCENE & BOOK ── */
+            .scene {
+                perspective: 1000px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 100%;
+                padding: 1rem 0 2rem;
+            }
+
+            .book-wrapper {
+                position: relative;
+                width: min(600px, 96vw);
+                height: clamp(400px, 72vh, 520px);
+                transform-style: preserve-3d;
+            }
+
+            /* ── COVER ── */
+            .cover-container {
+                position: absolute;
+                inset: 0;
+                transform-style: preserve-3d;
+                transform-origin: left center;
+                transition: transform 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+                z-index: 10;
+                cursor: pointer;
+            }
+
+            .cover-container.opened {
+                transform: rotateY(-175deg);
+                pointer-events: none;
+                cursor: default;
+            }
+
+            .cover-front,
+            .cover-back {
+                position: absolute;
+                inset: 0;
+                border-radius: 4px 14px 14px 4px;
+                backface-visibility: hidden;
+            }
+
+            .cover-front {
+                background: linear-gradient(
+                    145deg,
+                    #1a3a5c 0%,
+                    #2563a8 60%,
+                    #1e50a0 100%
+                );
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                border: 3px solid #0c2a45;
+                box-shadow:
+                    inset -6px 0 12px rgba(0, 0, 0, 0.25),
+                    4px 4px 20px rgba(0, 0, 0, 0.2);
+                padding: 2rem 2rem 2rem 3rem;
+            }
+
+            /* spine */
+            .cover-front::before {
+                content: "";
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 32px;
+                background: linear-gradient(90deg, #071e35, #0c2a45, #1a3a5c);
+                border-radius: 4px 0 0 4px;
+            }
+
+            /* decorative line */
+            .cover-front::after {
+                content: "";
+                position: absolute;
+                top: 20%;
+                bottom: 20%;
+                left: 40px;
+                right: 20px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                border-radius: 4px;
+            }
+
+            .cover-title {
+                color: #fff;
+                font-size: clamp(20px, 5vw, 26px);
+                font-weight: 600;
+                text-align: center;
+                letter-spacing: 2px;
+                z-index: 1;
+            }
+
+            .cover-subtitle {
+                color: rgba(255, 255, 255, 0.65);
+                font-size: clamp(11px, 2.5vw, 13px);
+                text-align: center;
+                z-index: 1;
+            }
+
+            .cover-icon {
+                font-size: clamp(36px, 8vw, 52px);
+                color: rgba(255, 255, 255, 0.88);
+                z-index: 1;
+            }
+
+            .cover-divider {
+                width: 40px;
+                height: 1px;
+                background: rgba(255, 255, 255, 0.25);
+                z-index: 1;
+            }
+
+            .cover-hint {
+                font-size: 11px;
+                color: rgba(255, 255, 255, 0.45);
+                z-index: 1;
+                margin-top: 6px;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                animation: pulse 2s infinite;
+            }
+
+            @keyframes pulse {
+                0%,
+                100% {
+                    opacity: 0.45;
+                }
+                50% {
+                    opacity: 0.9;
+                }
+            }
+
+            .cover-back {
+                background: #f4f1eb;
+                transform: rotateY(180deg);
+                border: 1px solid #ccc;
+            }
+
+            /* ── PAGES ── */
+            .pages-container {
+                position: absolute;
+                inset: 0;
+                background: #fff;
+                border-radius: 4px 14px 14px 4px;
+                border: 1px solid #ddd;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                box-shadow: 3px 3px 16px rgba(0, 0, 0, 0.1);
+            }
+
+            /* spine shadow on pages */
+            .pages-container::before {
+                content: "";
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 32px;
+                background: linear-gradient(90deg, #c4b49a, #ddd3be, #f0e8d8);
+                z-index: 1;
+                border-right: 1px solid #b8a882;
+            }
+
+            /* ── HEADER ── */
+            .page-header {
+                padding: 8px 12px 8px 44px;
+                border-bottom: 1px solid #eee;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                background: #f7f7f5;
+                position: relative;
+                z-index: 2;
+                flex-shrink: 0;
+                gap: 8px;
+            }
+
+            .page-title {
+                font-size: 12px;
+                font-weight: 500;
+                color: #555;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                white-space: nowrap;
+            }
+
+            .page-nav {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                flex-shrink: 0;
+            }
+
+            .page-nav button {
+                width: 26px;
+                height: 26px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 6px;
+                border: 1px solid #ddd;
+                background: #fff;
+                cursor: pointer;
+                font-size: 13px;
+                transition: background 0.15s;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .page-nav button:active:not(:disabled) {
+                background: #e8e8e8;
+            }
+            .page-nav button:disabled {
+                opacity: 0.3;
+                cursor: default;
+            }
+
+            .page-info {
+                font-size: 11px;
+                color: #777;
+                min-width: 64px;
+                text-align: center;
+            }
+
+            /* ── SEARCH ── */
+            .search-bar {
+                padding: 6px 12px 6px 44px;
+                border-bottom: 1px solid #eee;
+                position: relative;
+                z-index: 2;
+                flex-shrink: 0;
+                background: #fff;
+            }
+
+            .search-bar input {
+                width: 100%;
+                font-size: 12px;
+                padding: 5px 10px 5px 28px;
+                height: 28px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                outline: none;
+                background: #fafafa;
+                -webkit-appearance: none;
+            }
+
+            .search-bar input:focus {
+                border-color: #2563a8;
+                background: #fff;
+            }
+
+            .search-icon {
+                position: absolute;
+                left: 56px;
+                top: 50%;
+                transform: translateY(-50%);
+                font-size: 13px;
+                color: #aaa;
+                pointer-events: none;
+            }
+
+            /* ── TABLE ── */
+            .table-wrapper {
+                flex: 1;
+                overflow-y: auto;
+                overflow-x: hidden;
+                padding: 0 10px 0 44px;
+                position: relative;
+                z-index: 2;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 11px;
+                table-layout: fixed;
+            }
+
+            thead th {
+                position: sticky;
+                top: 0;
+                background: #f7f7f5;
+                padding: 7px 5px;
+                text-align: left;
+                font-weight: 500;
+                font-size: 10px;
+                color: #888;
+                border-bottom: 1px solid #eee;
+                z-index: 3;
+                white-space: nowrap;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            th:nth-child(1) {
+                width: 58px;
+            }
+            th:nth-child(2) {
+                width: 42%;
+            }
+            th:nth-child(3) {
+                width: auto;
+            }
+
+            tbody tr {
+                border-bottom: 1px solid #f2f2f2;
+                transition: background 0.1s;
+            }
+
+            tbody tr:active {
+                background: #f0f5ff;
+            }
+
+            @media (hover: hover) {
+                tbody tr:hover {
+                    background: #f5f8ff;
+                }
+            }
+
+            td {
+                padding: 6px 5px;
+                color: #222;
+                vertical-align: top;
+                word-break: break-word;
+                line-height: 1.4;
+            }
+
+            td:first-child {
+                font-family: monospace;
+                font-size: 10px;
+                color: #2563a8;
+                font-weight: 600;
+                white-space: nowrap;
+            }
+
+            /* ── FOOTER ── */
+            .page-footer {
+                padding: 6px 12px 6px 44px;
+                border-top: 1px solid #eee;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: #f7f7f5;
+                position: relative;
+                z-index: 2;
+                flex-shrink: 0;
+            }
+
+            .page-number {
+                font-size: 10px;
+                color: #aaa;
+            }
+
+            .page-dots {
+                display: flex;
+                gap: 5px;
+                align-items: center;
+            }
+
+            .dot {
+                width: 7px;
+                height: 7px;
+                border-radius: 50%;
+                background: #ddd;
+                cursor: pointer;
+                transition:
+                    background 0.2s,
+                    transform 0.2s;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .dot.active {
+                background: #2563a8;
+                transform: scale(1.3);
+            }
+
+            /* ── LOADING / EMPTY ── */
+            .loading-msg {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                color: #bbb;
+                font-size: 13px;
+                gap: 10px;
+            }
+
+            .loading-msg i {
+                font-size: 28px;
+            }
+
+            /* ── FLIP ANIMATION ── */
+            .flip-anim {
+                animation: flipPage 0.3s ease;
+            }
+
+            @keyframes flipPage {
+                0% {
+                    opacity: 0;
+                    transform: translateX(12px);
+                }
+                100% {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+
+            /* ── MOBILE ADJUSTMENTS ── */
+            @media (max-width: 480px) {
+                body {
+                    padding: 1rem 0.5rem;
+                }
+
+                .book-wrapper {
+                    height: clamp(380px, 75vh, 480px);
+                }
+
+                th:nth-child(2) {
+                    width: 38%;
+                }
+
+                .cover-front::after {
+                    display: none;
+                }
+            }
+
+            /* swipe hint on mobile */
+            @media (pointer: coarse) {
+                .cover-hint::before {
+                    content: "👆 ";
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="scene">
+            <div class="book-wrapper">
+                <!-- Halaman isi -->
+                <div class="pages-container" id="pagesContainer">
+                    <div class="page-header">
+                        <span class="page-title">
+                            <i class="ti ti-book-2"></i> Data ICD-10
+                        </span>
+                        <div class="page-nav">
+                            <button
+                                id="prevBtn"
+                                onclick="changePage(-1)"
+                                disabled
+                                aria-label="Halaman sebelumnya"
+                            >
+                                <i class="ti ti-chevron-left"></i>
+                            </button>
+                            <span class="page-info" id="pageInfo"
+                                >Hal 1 / 1</span
+                            >
+                            <button
+                                id="nextBtn"
+                                onclick="changePage(1)"
+                                aria-label="Halaman berikutnya"
+                            >
+                                <i class="ti ti-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="search-bar">
+                        <i class="ti ti-search search-icon"></i>
+                        <input
+                            type="search"
+                            id="searchInput"
+                            placeholder="Cari kode atau diagnosis..."
+                            oninput="onSearch(this.value)"
+                            autocomplete="off"
+                            autocorrect="off"
+                            spellcheck="false"
+                        />
+                    </div>
+
+                    <div class="table-wrapper" id="tableWrapper">
+                        <div class="loading-msg" id="loadingMsg">
+                            <i class="ti ti-book-open"></i>
+                            <span>Buka sampul untuk memuat data</span>
+                        </div>
+                        <table id="dataTable" style="display: none">
+                            <thead>
+                                <tr>
+                                    <th>Kode</th>
+                                    <th>Nama</th>
+                                    <th>Nama Indonesia</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="page-footer">
+                        <span class="page-number" id="pageCount">—</span>
+                        <div class="page-dots" id="pageDots"></div>
+                    </div>
+                </div>
+
+                <!-- Sampul buku -->
+                <div
+                    class="cover-container"
+                    id="coverContainer"
+                    onclick="openBook()"
+                >
+                    <div class="cover-front">
+                        <i class="ti ti-stethoscope cover-icon"></i>
+                        <div class="cover-title">ICD-10</div>
+                        <div class="cover-divider"></div>
+                        <div class="cover-subtitle">
+                            International Classification of Diseases
+                        </div>
+                        <div
+                            class="cover-subtitle"
+                            style="
+                                font-size: 11px;
+                                margin-top: 2px;
+                                opacity: 0.55;
+                            "
+                        >
+                            Kode Diagnosis Medis
+                        </div>
+                        <div class="cover-hint">
+                            <i class="ti ti-hand-click"></i> Ketuk untuk membuka
+                        </div>
+                    </div>
+                    <div class="cover-back"></div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const PAGE_SIZE = 50;
+            let allData = [];
+            let filteredData = [];
+            let currentPage = 0;
+            let isOpen = false;
+
+            // ── Swipe support ──
+            let touchStartX = 0;
+            document.getElementById("tableWrapper").addEventListener(
+                "touchstart",
+                (e) => {
+                    touchStartX = e.changedTouches[0].clientX;
+                },
+                { passive: true },
+            );
+            document.getElementById("tableWrapper").addEventListener(
+                "touchend",
+                (e) => {
+                    const dx = e.changedTouches[0].clientX - touchStartX;
+                    if (Math.abs(dx) > 50) changePage(dx < 0 ? 1 : -1);
+                },
+                { passive: true },
+            );
+
+            function openBook() {
+                if (isOpen) return;
+                isOpen = true;
+                document
+                    .getElementById("coverContainer")
+                    .classList.add("opened");
+
+                setTimeout(() => {
+                    fetch("Icd10.json")
+                        .then((res) => res.json())
+                        .then((data) => {
+                            allData = data;
+                            filteredData = [...allData];
+                            currentPage = 0;
+                            document.getElementById(
+                                "loadingMsg",
+                            ).style.display = "none";
+                            document.getElementById("dataTable").style.display =
+                                "table";
+                            renderPage();
+                        })
+                        .catch((err) => {
+                            console.error("Gagal memuat data:", err);
+                            document.getElementById("loadingMsg").innerHTML =
+                                '<i class="ti ti-alert-circle" style="font-size:28px;color:#e55;"></i><span>Gagal memuat Icd10.json</span>';
+                        });
+                }, 750);
+            }
+
+            function renderPage() {
+                const start = currentPage * PAGE_SIZE;
+                const end = Math.min(start + PAGE_SIZE, filteredData.length);
+                const slice = filteredData.slice(start, end);
+                const totalPages =
+                    Math.ceil(filteredData.length / PAGE_SIZE) || 1;
+
+                const tbody = document.getElementById("tableBody");
+                tbody.innerHTML = "";
+
+                if (slice.length === 0) {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `<td colspan="3" style="text-align:center;color:#bbb;padding:24px 0;">Tidak ada hasil</td>`;
+                    tbody.appendChild(tr);
+                } else {
+                    slice.forEach((item) => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `<td>${item.kdDiag}</td><td>${item.nmDiag}</td><td>${item.nmDiagIndo}</td>`;
+                        tbody.appendChild(tr);
+                    });
+                }
+
+                const tw = document.getElementById("tableWrapper");
+                tw.classList.remove("flip-anim");
+                void tw.offsetWidth;
+                tw.classList.add("flip-anim");
+                tw.scrollTop = 0;
+
+                document.getElementById("pageInfo").textContent =
+                    `Hal ${currentPage + 1} / ${totalPages}`;
+                document.getElementById("pageCount").textContent =
+                    filteredData.length > 0
+                        ? `${start + 1}–${end} dari ${filteredData.length}`
+                        : "0 hasil";
+                document.getElementById("prevBtn").disabled = currentPage === 0;
+                document.getElementById("nextBtn").disabled =
+                    currentPage >= totalPages - 1;
+
+                const dotsContainer = document.getElementById("pageDots");
+                dotsContainer.innerHTML = "";
+                const maxDots = Math.min(totalPages, 7);
+                for (let i = 0; i < maxDots; i++) {
+                    const dot = document.createElement("div");
+                    dot.className =
+                        "dot" + (i === currentPage ? " active" : "");
+                    dot.setAttribute("aria-label", `Halaman ${i + 1}`);
+                    const idx = i;
+                    dot.onclick = () => {
+                        currentPage = idx;
+                        renderPage();
+                    };
+                    dotsContainer.appendChild(dot);
+                }
+            }
+
+            function changePage(dir) {
+                const totalPages =
+                    Math.ceil(filteredData.length / PAGE_SIZE) || 1;
+                const next = currentPage + dir;
+                if (next < 0 || next >= totalPages) return;
+                currentPage = next;
+                renderPage();
+            }
+
+            function onSearch(val) {
+                const q = val.toLowerCase().trim();
+                filteredData = q
+                    ? allData.filter(
+                          (d) =>
+                              d.kdDiag.toLowerCase().includes(q) ||
+                              d.nmDiag.toLowerCase().includes(q) ||
+                              d.nmDiagIndo.toLowerCase().includes(q),
+                      )
+                    : [...allData];
+                currentPage = 0;
+                if (
+                    document.getElementById("dataTable").style.display !==
+                    "none"
+                )
+                    renderPage();
+            }
+        </script>
+    </body>
+</html>
