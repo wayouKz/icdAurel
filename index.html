@@ -566,7 +566,7 @@
                 </div>
             </div>
         </div>
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
             const PAGE_SIZE = 50;
             let allData = [];
@@ -598,27 +598,33 @@
                 document
                     .getElementById("coverContainer")
                     .classList.add("opened");
-
-                setTimeout(() => {
-                    fetch("Icd10.json")
-                        .then((res) => res.json())
-                        .then((data) => {
-                            allData = data;
-                            filteredData = [...allData];
-                            currentPage = 0;
-                            document.getElementById(
-                                "loadingMsg",
-                            ).style.display = "none";
-                            document.getElementById("dataTable").style.display =
-                                "table";
-                            renderPage();
-                        })
-                        .catch((err) => {
-                            console.error("Gagal memuat data:", err);
-                            document.getElementById("loadingMsg").innerHTML =
-                                '<i class="ti ti-alert-circle" style="font-size:28px;color:#e55;"></i><span>Gagal memuat Icd10.json</span>';
-                        });
-                }, 750);
+                    Swal.fire({
+    icon: 'info',
+    title: 'Info',
+    text: 'Service Di Tutup Hubungi Wahyu.',
+    showConfirmButton: false,
+    allowOutsideClick: false // Mengizinkan tutup saat area luar diklik
+});
+                // setTimeout(() => {
+                //     fetch("Icd10.json")
+                //         .then((res) => res.json())
+                //         .then((data) => {
+                //             allData = data;
+                //             filteredData = [...allData];
+                //             currentPage = 0;
+                //             document.getElementById(
+                //                 "loadingMsg",
+                //             ).style.display = "none";
+                //             document.getElementById("dataTable").style.display =
+                //                 "table";
+                //             renderPage();
+                //         })
+                //         .catch((err) => {
+                //             console.error("Gagal memuat data:", err);
+                //             document.getElementById("loadingMsg").innerHTML =
+                //                 '<i class="ti ti-alert-circle" style="font-size:28px;color:#e55;"></i><span>Gagal memuat Icd10.json</span>';
+                //         });
+                // }, 750);
             }
 
             function renderPage() {
